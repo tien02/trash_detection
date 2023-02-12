@@ -7,7 +7,7 @@ from utils import collate_fn
 from torch.utils.data import DataLoader
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 
 if __name__ == '__main__':
     # Seed
@@ -41,9 +41,9 @@ if __name__ == '__main__':
     # Callback
     ckpt = ModelCheckpoint(dirpath=config.CHECKPOINT_DIR,monitor='map', save_top_k=2, mode='max')
     early_stopping = EarlyStopping(monitor="map", mode='max', check_finite=True)
-    # tensorboard = TensorBoardLogger(save_dir=config.TENSORBOARD["DIR"], 
-    #                                 name=config.TENSORBOARD["NAME"], 
-    #                                 version=config.TENSORBOARD["VERSION"])
+    tensorboard = TensorBoardLogger(save_dir=config.TENSORBOARD["DIR"], 
+                                    name=config.TENSORBOARD["NAME"], 
+                                    version=config.TENSORBOARD["VERSION"])
 
     # Trainer
     trainer = Trainer(accelerator=config.ACCELERATOR, 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     enable_checkpointing=True, 
                     deterministic=True,
                     default_root_dir=config.CHECKPOINT_DIR, 
-                    callbacks=[ckpt, early_stopping,])
+                    callbacks=[ckpt, early_stopping, tensorboard])
 
     trainer.fit(model=model,
                 train_dataloaders=train_dataloader,

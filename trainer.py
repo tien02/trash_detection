@@ -1,11 +1,10 @@
 import config
 from utils import batch_nms
 
+import torch
 from pytorch_lightning import LightningModule
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torch.optim import Adam, SGD, AdamW
-
-from pprint import pprint
 
 class FasterRCNNTrainer(LightningModule):
     def __init__(self, model):
@@ -30,18 +29,18 @@ class FasterRCNNTrainer(LightningModule):
         imgs, targets = batch
 
         pred = self.model(imgs)
-        pred_after_nms = batch_nms(pred, config.NMS_THRESHOLD)
+        # pred = batch_nms(pred, config.NMS_THRESHOLD)
+        targets = unsqueeze_batch(targets)
 
-
-
-        self.test_metrics.update(pred_after_nms, targets) 
+        self.test_metrics.update(pred, targets) 
 
     def validation_step(self, batch, batch_idx):
         imgs, targets = batch
         pred = self.model(imgs)
-        pred_after_nms = batch_nms(pred, config.NMS_THRESHOLD)
+        pred = batch_nms(pred, config.NMS_THRESHOLD)
+        targets = unsqueeze_batch(targets)
 
-        self.val_metrics.update(pred_after_nms, targets)
+        self.val_metrics.update(pred, targets)
     
     def validation_epoch_end(self, outputs):
         metrics = self.val_metrics.compute()
@@ -64,3 +63,9 @@ class FasterRCNNTrainer(LightningModule):
                 'optimizer': optimizer
                 # 'scheduler':
             }
+    
+def unsqueeze_batch(targets):
+    batch = []
+    for target in targets:
+        batch.append({k: torch.unsqueeze(v,0) for k, v in target.items()})
+    return batch

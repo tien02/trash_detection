@@ -7,7 +7,7 @@ TRAIN_DATA = "annotations_0_train.json"
 VAL_DATA = "annotations_0_val.json"
 TEST_DATA = "annotations_0_test.json"
 BATCHSIZE = 2
-NUM_WORKERS = 2
+NUM_WORKERS = 8
 
 # Model
 NUM_CLASSES = 60
@@ -25,7 +25,7 @@ transform = A.Compose([
     A.HorizontalFlip(p=0.5),
     A.VerticalFlip(p=0.3),
     A.RandomBrightnessContrast(p=0.5),
-], bbox_params=A.BboxParams(format='coco', label_fields=['class_label']))
+], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['class_label']))
 
 # TENSORBOARD LOG
 TENSORBOARD = {
