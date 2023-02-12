@@ -1,27 +1,25 @@
 import config
-from utils import apply_nms
+from utils import batch_nms
 
 from pytorch_lightning import LightningModule
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torch.optim import Adam, SGD, AdamW
 
+from pprint import pprint
+
 class FasterRCNNTrainer(LightningModule):
     def __init__(self, model):
         super().__init__()
         self.model = model
-        self.test_metrics = MeanAveragePrecision()
-        self.val_metrics = MeanAveragePrecision()
+        self.test_metrics = MeanAveragePrecision(iou_type='bbox')
+        self.val_metrics = MeanAveragePrecision(iou_type='bbox')
 
     def forward(self, imgs):
         pred = self.model(imgs)
         return pred
 
     def training_step(self, batch):
-        imgs, boxes, labels = batch
-        targets = {
-            'boxes': boxes,
-            'labels': labels
-        }
+        imgs, targets = batch
         
         losses = self.model(imgs, targets)
         sum_loss = sum(losses.values())
@@ -29,29 +27,21 @@ class FasterRCNNTrainer(LightningModule):
         return sum_loss
     
     def test_step(self, batch, batch_idx):
-        imgs, boxes, labels = batch
+        imgs, targets = batch
 
         pred = self.model(imgs)
-        pred_after_nms = apply_nms(pred, config.NMS_THRESHOLD)
+        pred_after_nms = batch_nms(pred, config.NMS_THRESHOLD)
 
-        target = {
-            'boxes': boxes,
-            'labels': labels
-        }
 
-        self.test_metrics.update(pred_after_nms, target) 
+
+        self.test_metrics.update(pred_after_nms, targets) 
 
     def validation_step(self, batch, batch_idx):
-        imgs, boxes, labels = batch
-
+        imgs, targets = batch
         pred = self.model(imgs)
-        pred_after_nms = apply_nms(pred, config.NMS_THRESHOLD)
+        pred_after_nms = batch_nms(pred, config.NMS_THRESHOLD)
 
-        target = {
-            'boxes': boxes,
-            'labels': labels
-        }
-        self.val_metrics.update(pred_after_nms, target)
+        self.val_metrics.update(pred_after_nms, targets)
     
     def validation_epoch_end(self, outputs):
         metrics = self.val_metrics.compute()

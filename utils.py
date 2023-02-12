@@ -2,7 +2,10 @@ import cv2 as cv
 import numpy as np
 import torchvision
 
-def apply_nms(pred, iou_threshold=0.3):
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
+def apply_nms(pred:dict, iou_threshold:float=0.3):
     # Apply Non Max Suppression
     '''
     Input: 
@@ -26,6 +29,13 @@ def apply_nms(pred, iou_threshold=0.3):
                                 iou_threshold=iou_threshold)
     new_pred = {k: v[keep_idx] for k, v in pred.items()}
     return new_pred
+
+def batch_nms(preds:list, iou_threhold:float=0.3):
+    batch = []
+    for pred in preds:
+        pred_after_nms = apply_nms(pred, iou_threhold)
+        batch.append(pred_after_nms)
+    return batch
 
 def draw_bounding_box(img, labels, boxes):
     # Draw Bounding Box

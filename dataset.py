@@ -34,5 +34,8 @@ class TacoDataset(CocoDetection):
 
             transformed = self.transform(**sample)
             img, box, category = transformed.values()
-
-        return transforms.ToTensor()(img), torch.tensor(box), torch.tensor(category)
+        target = {
+            'boxes': torch.tensor([box]),
+            'labels': torch.tensor([category])
+        }
+        return transforms.ToTensor()(img), target
