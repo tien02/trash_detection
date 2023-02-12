@@ -37,7 +37,7 @@ class FasterRCNNTrainer(LightningModule):
     def validation_step(self, batch, batch_idx):
         imgs, targets = batch
         pred = self.model(imgs)
-        pred = batch_nms(pred, config.NMS_THRESHOLD)
+        # pred = batch_nms(pred, config.NMS_THRESHOLD)
         targets = unsqueeze_batch(targets)
 
         self.val_metrics.update(pred, targets)
