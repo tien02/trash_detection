@@ -1,3 +1,4 @@
+import math
 import cv2 as cv
 import numpy as np
 import torchvision
@@ -88,7 +89,7 @@ def xywh2xyxy(box: list):
     box[2] = x2
     box[3] = y2
     
-    return box
+    return [math.ceil(i) for i in box]
 
 def xywh2cxcywh(box: list):
     # Convert bouding box from xywh format to cxcywh
@@ -98,4 +99,4 @@ def xywh2cxcywh(box: list):
     box[0] = box[0] + (box[2] / 2)
     box[1] = box[1] + (box[3] / 2)
 
-    return box
+    return [math.ceil(i) for i in box]
