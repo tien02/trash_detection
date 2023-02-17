@@ -6,6 +6,8 @@ from pytorch_lightning import LightningModule
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torch.optim import Adam, SGD, AdamW
 
+from pprint import pprint
+
 class FasterRCNNTrainer(LightningModule):
     def __init__(self, model):
         super().__init__()
@@ -22,29 +24,32 @@ class FasterRCNNTrainer(LightningModule):
         
         losses = self.model(imgs, targets)
         sum_loss = sum(losses.values())
-        self.log("train_loss", sum_loss, on_epoch=True, prog_bar=True)
+        self.log("train_loss", sum_loss, on_epoch=True, prog_bar=True, batch_size=config.BATCHSIZE)
         return sum_loss
     
     def test_step(self, batch, batch_idx):
         imgs, targets = batch
 
         pred = self.model(imgs)
-        # pred = batch_nms(pred, config.NMS_THRESHOLD)
-        targets = unsqueeze_batch(targets)
+        # targets = unsqueeze_batch(targets)
 
         self.test_metrics.update(pred, targets) 
+    
+    def test_epoch_end(self, outputs):
+        metrics = self.test_metrics.compute()
+        self.log_dict(metrics, prog_bar=True, batch_size=config.BATCHSIZE)
+        self.test_metrics.reset()
 
     def validation_step(self, batch, batch_idx):
         imgs, targets = batch
         pred = self.model(imgs)
-        # pred = batch_nms(pred, config.NMS_THRESHOLD)
-        targets = unsqueeze_batch(targets)
+        # targets = unsqueeze_batch(targets)
 
         self.val_metrics.update(pred, targets)
     
     def validation_epoch_end(self, outputs):
         metrics = self.val_metrics.compute()
-        self.log("val_metrics", metrics, prog_bar=True)
+        self.log_dict(metrics, prog_bar=True, batch_size=config.BATCHSIZE)
         self.val_metrics.reset()
     
     def configure_optimizers(self):
@@ -59,10 +64,10 @@ class FasterRCNNTrainer(LightningModule):
         ## Scheduler
         # scheduler = 
             
-            return {
-                'optimizer': optimizer
-                # 'scheduler':
-            }
+        return {
+            'optimizer': optimizer
+            # 'scheduler':
+        }
     
 def unsqueeze_batch(targets):
     batch = []
