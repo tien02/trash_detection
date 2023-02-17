@@ -6,6 +6,7 @@ from torchvision.transforms import transforms
 from torchvision.datasets import CocoDetection 
 
 from utils import xywh2cxcywh, xywh2xyxy
+from pprint import pprint
 
 class TacoDataset(CocoDetection):
     def __init__(self, root, annFile, bbformat='xyxy', transform=None):
@@ -19,23 +20,26 @@ class TacoDataset(CocoDetection):
         box = label[0]["bbox"]
         category = label[0]['category_id']
         
+
         if self.bbformat == 'xyxy':
             box = xywh2xyxy(box)
-
-        if self.bbformat == 'cxcywh':
-            box = xywh2cxcywh(box)        
-
+        elif self.bbformat == 'cxcywh':
+            box = xywh2cxcywh(box)
+        
         if self.transform:
             sample = {
                 'image':np.array(img),
                 'bboxes': [box],
                 'class_label': [category]
             }
+            # print(f"box {box} - img {np.array(img).shape}")
 
             transformed = self.transform(**sample)
             img, box, category = transformed.values()
+            
         target = {
-            'boxes': torch.tensor(box),
-            'labels': torch.tensor(category)
+          'boxes': torch.tensor([box]),
+          'labels': torch.tensor([category])
         }
+        
         return transforms.ToTensor()(img), target
